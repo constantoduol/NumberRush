@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Number Rush</title>
+    <link rel='shortcut icon' type='image/x-icon' href='img/splash1.png' />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="description" content="number and brain game" />
+    
+    
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/bubbles.css" rel="stylesheet" />
+    <link href="css/jquery.ui.core.css" rel="stylesheet" />
+    <link href="css/jquery.ui.progressbar.css" rel="stylesheet" />
+    <link href="css/jquery.ui.theme.css" rel="stylesheet" />
+    <style>
+        
+        body {
+            background: url(img/background1.png);
+        }
+        .ui-progressbar {
+           height : 6px; 
+           border-color : #51CBEE;
+        }
+        
+        .ui-progressbar  .ui-progressbar-value {
+           margin : 0px; 
+        }
+        
+        .ui-widget-header {
+           background :  #51CBEE;
+           border : 0px;
+           color : transparent;
+        }
+        
+        
+      
+    </style>
+</head>
+<body>
+    <div id="gamecontainer">
+         <div id = "scorebar">
+             <span id="score-anim-area-up"></span>
+             <div style="display : -webkit-box">
+                    <div class="score-table">
+                        <div><span>SCORE</span> <span id="current-score" >0</span></div>
+	        	<div><span>BEST</span> <span id="best-score" >0</span></div>
+                    </div>
+                    <div class="score-table" id="prof-table">
+                        <div id="prof-name">amateur</div>
+                        <div id="prof-value">0</div>
+                    </div>
+             <div>
+                   <a href="#" class="link" title="Pause Game" onclick="game.pause(true);">
+                       <img src="img/pause.png" width="25" height="25" />
+                   </a>
+                   <a href="#" class="link" title="Restart Game" onclick="game.restart();">
+                       <img src="img/replay.png" width="25" height="25" />
+                  </a>
+                   <span id="score-anim-area-down"></span>
+                   <a href="#" class="link" title="Lives" id="life-heart">
+                        <span id="life-area">3</span>
+                        <img src="img/heart.png" width="25" height="25"  />
+                   </a>
+             </div>
+        </div>
+             
+          <div id="progressbar"></div>
+         <div id="number-area-left">
+            0
+         </div>
+         <div id="number-area-right">
+            0
+         </div>
+         </div>
+       
+        <div id = "bubble-active-area">
+            <table id="bubble-table" >
+                
+            </table>
+            <div id="message-area">
+                
+            </div>
+        </div>
+    </div>
+   
+    
+    
+    
+    <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="js/jquery.ui.core.js"></script>
+    <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="js/jquery.ui.progressbar.js"></script>
+    <script type="text/javascript" src="js/bubbles.js"></script>
+    <script type="text/javascript" src="js/models.js"></script>
+    <script type="text/javascript">
+        
+        (function init(){
+          goHome();
+          var height = game.getDim()[1];
+          var bubbleAreaHeight = (height)+"px";
+          $("#bubble-active-area").css("height",bubbleAreaHeight);
+          
+        })();
+       
+        function goHome(){
+            var model = new ModelInit();
+            var bubbleGame = new BubbleGame(model);
+            window.game = bubbleGame;
+            if(game.device.name === "android"){
+                jse.pauseMusic();
+            }
+            game.init();
+        }
+    </script>
+</body>
+</html>
