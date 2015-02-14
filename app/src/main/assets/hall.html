@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Hall of Fame</title>
+    <link rel='shortcut icon' type='image/x-icon' href='img/splash1.png' />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="description" content="number game" />
+
+
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/bubbles.css" rel="stylesheet" />
+    <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="js/models.js"></script>
+    <script type="text/javascript" src="js/models.js"></script>
+    <script type="text/javascript" src="js/ui.js"></script>
+    <style>
+
+
+
+        body {
+          background : url(img/background1.png);
+          margin : 20px;
+          font-family : buxton;
+          font-size : 16px;
+        }
+
+        select {
+          padding : 10px;
+          font-size : 20px;
+          border-radius : 5px;
+        }
+        .btn {
+          font-size : 20px;
+          margin-left : 10px;
+        }
+
+        #type {
+           margin-left : 20px;
+        }
+
+      .table-striped > tbody >tr:nth-child(odd)>td, .table-striped>tbody>tr:nth-child(odd)>th {
+           background-color: #F0F8FF;
+       }
+
+        th {
+          font-size : 24px;
+          font-weight : bolder;
+        }
+
+       a {
+          padding : 10px;
+        }
+
+
+    </style>
+    </head>
+<body>
+   <select id = "levels">
+      <option value="">Level</option>
+   </select>
+   <select id = "type">
+       <option value="">Badge</option>
+       <option value="silver">Silver</option>
+       <option value="gold">Gold</option>
+   </select>
+   <input type='button' class='btn' value='Go' onclick="fetchLeaderBoard('init')">
+   <img src = "img/loader.gif" id="load_area" width="30" height="30" style="display:none">
+   <hr/>
+   <table class="table table-condensed table-striped" id="hall_of_fame" >
+
+   </table>
+<script type="text/javascript">
+
+   var resultLength = 0;
+
+   var USER_LIMIT = 4;
+
+   var currentCursor = "";
+
+   var next_button_set = false;
+
+
+  (function(){
+     var len = Model.prototype.levelData.length;
+     var sel = $("#levels");
+     for(var x = 1; x <= len; x++){
+        var opt = $("<option value="+x+">"+x+"</option>")
+        sel.append(opt);
+     }
+  })();
+
+  function fetchLeaderBoard(type){
+     theCursor = type === "init" ? "" : currentCursor;
+     resultLength = type === "init" ? 0 : resultLength;
+     var level = $("#levels").val();
+     var type = $("#type").val();
+     if(level === ""){
+        alert("Please select a level to proceed");
+        return;
+     }
+     if(type === ""){
+        alert("Please select a badge to proceed");
+        return;
+     }
+     Ajax.run({
+      url : "http://numberrushweb.appspot.com/numbers",
+      type : "post",
+      loadArea : "load_area",
+      data :  {
+          request_header : {
+              request_msg : "leader_board"
+          },
+          request_object : {
+             level : level,
+             type : type,
+             cursor : theCursor
+          }
+      },
+      error : function(err){
+          alert("Whoops!something went wrong, please check your internet connection");
+      },
+      success : function(json){
+        var cursor = json.data.cursor;
+        currentCursor = cursor;
+        var myUserId = localStorage.getItem("user_id");
+        var table = $("#hall_of_fame");
+        table.html("");
+        var header = $("<tr><th>No.</th><th>Name</th><th>Date Entered</th></tr>");
+        table.append(header);
+        for(var x = 0; x < json.data.response.length; x++){
+            var index = resultLength + x + 1;
+            var name = json.data.response[x].name;
+            var userId = json.data.response[x].userId;
+            var entered = json.data.response[x].entered;
+            var date = new Date(entered);
+            var color = userId === myUserId ? "green" : "" ;
+            var dateString = date.getDate()+"/"+(date.getMonth()+1)+"/"+date.getFullYear();
+            var tr = $("<tr style='background : "+color+"'> <td>"+index+"</td> <td>"+name+"</td> <td>"+dateString+"</td></tr>");
+            table.children().append(tr);
+
+
+        }
+        resultLength = json.data.response.length + resultLength;
+        if(!next_button_set){
+           next_button_set = true;
+          $("body").append("<a href='#' onclick='fetchLeaderBoard(\"next\")' title='next'><img src='img/next.png' style='width:40px'></a>")
+        }
+      }});
+  }
+
+
+</script>
+</body>
+</html>
