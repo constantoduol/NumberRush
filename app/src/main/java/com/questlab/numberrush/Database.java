@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class Database extends SQLiteOpenHelper{
 
-    private static String DATABASE_NAME="NUMBER_RUSH";
+    private static String DATABASE_NAME = "NUMBER_RUSH";
 
 
     public Database(Context cxt){
@@ -19,6 +19,7 @@ public class Database extends SQLiteOpenHelper{
 	public void onCreate(SQLiteDatabase db) {
 		//create the tables we will need currently
         //CURRENT,BEST, NUMBER_ONE,NUMBER_TWO,LIVES,SOUND_ON,MUSIC_ON
+        /*
         db.execSQL("create table SETTINGS (SOUND_ON TEXT, MUSIC_ON TEXT)");
         ContentValues values = new ContentValues();
         values.put("SOUND_ON","off");
@@ -28,11 +29,12 @@ public class Database extends SQLiteOpenHelper{
         for(int x = 1; x < levels; x++){
             ensureTableExists("GAMEDATA"+x,db);
         }
+        */
 	}
 
 
     private static void ensureTableExists(String tableName,SQLiteDatabase db){
-        db.execSQL("create table "+tableName+" (CURRENT TEXT, BEST TEXT, NUMBER_ONE TEXT,NUMBER_TWO TEXT,LIVES TEXT, LEVEL_UNLOCKED TEXT)");
+        db.execSQL("create table "+tableName+" (CURRENT TEXT, BEST TEXT, NUMBER_ONE TEXT,NUMBER_TWO TEXT,LIVES TEXT, LEVEL_UNLOCKED TEXT,PLAY_FACTOR TEXT,BRONZE TEXT, SILVER TEXT, GOLD TEXT)");
         ContentValues values = new ContentValues();
         values.put("CURRENT", "0");
         values.put("BEST","0");
@@ -40,6 +42,10 @@ public class Database extends SQLiteOpenHelper{
         values.put("NUMBER_TWO","10");
         values.put("LIVES","null");
         values.put("LEVEL_UNLOCKED","false");
+        values.put("PLAY_FACTOR","10");
+        values.put("BRONZE","false");
+        values.put("SILVER","false");
+        values.put("GOLD","false");
         db.insert(tableName, null, values);
     }
 

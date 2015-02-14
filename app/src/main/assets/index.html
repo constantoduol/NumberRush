@@ -96,6 +96,7 @@
     <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
     <script type="text/javascript" src="js/jquery.ui.progressbar.js"></script>
     <script type="text/javascript" src="js/bubbles.js"></script>
+    <script type="text/javascript" src="js/ui.js"></script>
     <script type="text/javascript" src="js/models.js"></script>
     <script type="text/javascript">
         
@@ -106,14 +107,16 @@
           $("#bubble-active-area").css("height",bubbleAreaHeight);
           
         })();
+
+        function showAd(){
+          jse.showAd();
+          goHome();
+        }
        
         function goHome(){
             var model = new ModelInit();
             var bubbleGame = new BubbleGame(model);
             window.game = bubbleGame;
-            if(game.device.name === "android"){
-                jse.pauseMusic();
-            }
             game.init();
         }
     </script>

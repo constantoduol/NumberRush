@@ -16,7 +16,12 @@
 
     <link href="css/bootstrap.min.css" rel="stylesheet" />
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet" />
+	 <link href="css/bubbles.css" rel="stylesheet" />
 	<style>
+		body {
+		  font-family : buxton;
+		  font-size : 20px;
+		}
 		.message-container {
 			overflow: auto;
 			position: absolute;
@@ -28,20 +33,26 @@
 			z-index: 100;
 			text-align: center;
 		}
+		.link {
+		  padding : 5px;
+		  background : lightblue;
+		  font-size : 20px;
+		  border-radius : 5px;
+		  color : white;
+		  margin-bottom : 20px;
+		}
 	</style>
 	
 </head>
-<body>
+<body style='background:url(img/background1.png)'>
 <div class="message-container">
-<p style='margin:20px;text-align : left'>Number Rush is brought to you by Quest LTD, Nairobi, Kenya</p>
+<p style='margin:20px;text-align : left'>Number Rush is brought to you by Quest LTD, Nairobi, Kenya. We do not collect your data
+ in any way except when you choose to upload your score to numberrushweb.appspot.com
+</p>
+<img src='img/logo-nr.png' width="60%" style='border-radius:10px;'>
 <img src='img/qlogo.png' width="60%" style='border-radius:10px;'>
-<div style="text-align:left">
-<h1 style='margin:20px;'>Credits</h1>
-<ol>
-<li>Programming - Constant Oduol</li>
-<li>Testing - Morris Kimani</li>
-</ol>
-</div>
+<br><br><a href='https://www.facebook.com/QuestGameLab' class='link'>Facebook</a>
+<a href='https://numberrushweb.appspot.com' class='link' >Numberrush</a>
 </div>
 </body>
 </html>

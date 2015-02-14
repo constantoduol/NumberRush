@@ -15,7 +15,7 @@ function BubbleGame(model){
    this.profTable = $("#prof-table");
    this.lifeArea = $("#life-area");
    this.lifeHeart = $("#life-heart");
-   this.bubbleNumber = 4; //number of bubbles across the screen
+   this.bubbleNumber = model.bubbleNumber; //number of bubbles across the screen
    var width = this.getDim()[0];
    var height = this.getDim()[1];
    var gameWidth;
@@ -53,6 +53,7 @@ function BubbleGame(model){
    this.bubbleArea.css("border-collapse","separate");
    this.settings = {};
    this.state = [];
+   this.paused = false;
 }
 
 
@@ -94,51 +95,98 @@ BubbleGame.prototype.init = function(){
 };
 
 BubbleGame.prototype.showLevelMessage = function(type){ //if type == init, play, pause
+    
     var scoreToNextLevel = game.model.nextLevelScore;
     var nextLevel = game.model.name + 1;
     var levels = game.model.levelData.length;
-    var diff = scoreToNextLevel - parseInt(game.bestScoreArea.html());
+    var currentBest = parseInt(game.bestScoreArea.html());
+    var diff = scoreToNextLevel - currentBest;
+    
     if(diff <= 0 && type === "play"){
-       game.pause(false);
        if(nextLevel > levels){
-          game.showMessage("<a href='#' class='icon' onclick='game.device.share()' title='Share with friends'><img src='img/share.png'></a>"+ 
+            game.showMessage("<a href='#' class='icon' onclick='game.device.share()' title='Share with friends'><img src='img/share.png'></a>"+ 
                               "<a href='#' class='icon' onclick='game.resume(true);' title='Continue Playing'><img src='img/continue.png'></a>"+
-                              "<a href='#' class='icon' onclick='game.removeMessage();goHome();' title='Go Home'><img src='img/home.png'></a>"+
+                              "<a href='#' class='icon' onclick='game.removeMessage();showAd();' title='Go Home'><img src='img/home.png'></a>"+
                               "<br/><br/>Congratulations! You win the game!",
             Infinity);
-            jse.saveStateData(game.model.name,"LEVEL_UNLOCKED","true");
+            localStorage.setItem(nextLevel+"_level_unlocked","true");
        }
        else{
-          jse.saveStateData(game.model.name,"LEVEL_UNLOCKED","true");
-          if(!game.state[5]){ //if the level is still unlocked show this
+          
+          localStorage.setItem(nextLevel+"_level_unlocked","true");
+          var hasBronze = localStorage.getItem(nextLevel+"_level_unlocked");
+          
+          if(hasBronze !== "true"){ //if the next level is still unlocked show this
             game.showMessage("<a href='#' class='icon' onclick='game.device.share()' title='Share with friends'><img src='img/share.png'></a>"+ 
                               "<a href='#' class='icon' onclick='game.resume(true);' title='Continue Playing'><img src='img/continue.png'></a>"+
                               "<a href='#' class='icon' onclick='ModelInit.prototype.levelHandler("+(nextLevel-1)+")' title='Next Level'><img src='img/next.png'></a>"+
-                              "<br/><br/>Congratulations! You can now go to level "+nextLevel+" or continue playing",Infinity);  
+                              "<br/><br/><span style='font-size : 16px;'>Congratulations! You have earned a bronze badge"+
+                              "<br/><img src='img/bronze.png' width=15 height=15><img src='img/bronze.png' width=15 height=15><img src='img/bronze.png' width=15 height=15><br/>"+
+                              "You can now go to level "+nextLevel+" or continue playing to earn more badges</span>",Infinity);  
           }
-          else {
-               game.resume(true);
+          else { //otherwise check for silver and gold badges otherwise just resume
+              var hasGold = localStorage.getItem(game.model.name+"_gold_badge");
+              var hasSilver = localStorage.getItem(game.model.name+"_silver_badge");
+              var badge;
+              if(currentBest >= game.model.goldScore && hasGold !== "true"){
+                //this person has earned a gold badge  
+                 badge = "gold";
+                 localStorage.setItem(game.model.name+"_gold_badge","true");
+              }
+              else if(currentBest >= game.model.silverScore && hasSilver !== "true"){
+                 //this person has earned a silver badge
+                 badge = "silver";
+                 localStorage.setItem(game.model.name+"_silver_badge","true"); 
+              }
+              else {
+                return;
+              }
+              var msg = "<a href='#' class='icon' onclick='game.resume(true);' title='Continue Playing'><img src='img/continue.png'></a>"+
+                       "<a href='#' class='icon' onclick='game.upload(\""+badge+"\");' title='Upload Score'><img src='img/upload.png'></a>"+
+                       "<br/><br/><span style='font-size : 16px;'>Congratulations you have earned a "+badge+" badge<br/>"+
+                       "<img src='img/"+badge+".png' width=15 height=15><img src='img/"+badge+".png' width=15 height=15><img src='img/"+badge+".png' width=15 height=15>"+
+                       "<br/>and entered the Numberrush hall of fame<br/>"+
+                       "Click the upload button to send your score to numberrushweb.appspot.com</span>";
+              
+              game.showMessage(msg,Infinity);
           }
           
        }
       
     }
     
-    if(type === "init") {
-       if(nextLevel > levels || diff <=0 ){
-           game.init();
+   else if(type === "init") {
+        //this is when the game is starting
+       var msg = undefined;
+       if(nextLevel > levels || diff <= 0 ){
+           //this person has already cleared this level, so what's remaining is the silver and gold
+            var silverDiff = game.model.silverScore - currentBest;
+            var goldDiff = game.model.goldScore - currentBest;
+            if(currentBest < game.model.silverScore){
+                //this person has not reached the silver score 
+                msg = "Play on to get a silver badge for this level, only "+silverDiff+" points to go";
+            }
+            else if(currentBest < game.model.goldScore){
+                //this person has not reached the gold score
+                msg = "Play on to get a gold badge for this level, only "+goldDiff+" points to go";
+            }
+            
        }
        else { 
-           game.showMessage(""+scoreToNextLevel+" points to reach level "+nextLevel+",<br/>"+diff+" points to go",3100);
-           game.runLater(3000,function(){
-                game.init();
-            });
+           msg = ""+scoreToNextLevel+" points to reach level "+nextLevel+",<br/>"+diff+" points to go";
        }
+       
+        if(msg){
+            game.showMessage(msg,4000,game.init);
+        }
+        else {
+          game.init();  
+        }
     }
     
-    if(type === "pause"){
-       game.messageArea.append("<br/><br/><span style='font-size : 16px;'>Congratulations! Level "+game.profName.html()+"<br/>"+
-                                "with "+game.profValue.html()+"% proficiency<br/>respond faster to get higher scores</span>"); 
+    else if(type === "pause"){
+       game.messageArea.append("<br/><br/><span style='font-size : 16px;'>Level "+game.profName.html()+
+                                " with "+game.profValue.html()+"% proficiency<br/>respond faster to get higher scores</span>"); 
     }
     //we show at the beginning the value of score you should get to
     //we congratulate you if you get there
@@ -152,6 +200,7 @@ BubbleGame.prototype.progressRunner = function(){
        game.bubbleNotClickedPenaltyFactor = 0.5;
     }
     game.bubbleClicked = false;
+    game.paused = false;
     game.clearAllTimers();
     game.moveFactor = 0;
     game.playFactorCount++;
@@ -187,9 +236,12 @@ BubbleGame.prototype.animateProgress = function(){
     function animate(){
         var percent = (game.moveFactor/game.progressFactor)*100;
         game.progressBar.progressbar({
-            value : (100 - percent )
+            value : (100 - percent)
         });
-        var progressTimer = game.runLater(game.progressAnimationDelay,game.animateProgress);
+        if(!game.paused){
+            //schedule a refresh only if not paused
+            var progressTimer = game.runLater(game.progressAnimationDelay,game.animateProgress);
+        }
         game.timeoutData.progress_timer = progressTimer;
         game.moveFactor++;
         game.moveFactor = percent === 100 ? 0 : game.moveFactor;
@@ -217,7 +269,7 @@ BubbleGame.prototype.disappear = function(){
   }
 };
 
-BubbleGame.prototype.showMessage = function(msg,duration){
+BubbleGame.prototype.showMessage = function(msg,duration,callback){
   if(!msg){
       
   }
@@ -229,7 +281,7 @@ BubbleGame.prototype.showMessage = function(msg,duration){
   game.messageArea.addClass("new-bubble");
   game.bubbleArea.css("display","none");
   if(duration === Infinity){
-      
+     game.pause(false);
   }
   else {
       game.runLater(duration*0.95,function(){
@@ -240,6 +292,9 @@ BubbleGame.prototype.showMessage = function(msg,duration){
        game.runLater(duration,function(){
            game.messageArea.css("display","none");
            game.messageArea.removeClass("old-bubble"); 
+           if(callback){
+              callback();
+           }
        });
   }
   
@@ -281,7 +336,7 @@ BubbleGame.prototype.clickBubble = function(bubbleId){
           var newNumTwo = game.numberTwo + game.nextRangeRandom(5,game.playFactor);
           game.numberOne = game.numberTwo;
           game.numberTwo = newNumTwo;
-         
+          
           var currentScore = game.scoreArea.html();
           var bestScore = game.bestScoreArea.html();
           currentScore = parseInt(currentScore) + scoreUp;
@@ -312,17 +367,16 @@ BubbleGame.prototype.clickBubble = function(bubbleId){
           game.lifeArea.html(lives);
           game.glow(game.lifeHeart,4000);
           game.lifeDown();
-          if(lives <= 0){
-             game.pause(false); 
+          if(lives <= 0){ 
              game.showMessage("<a href='#' class='icon' onclick='game.device.share()' title='Share with friends'><img src='img/share.png'></a>"+ 
                               "<a href='#' class='icon' onclick='game.doRestart();' title='Play again'><img src='img/replay.png'></a>"+
-                              "<a href='#' class='icon' onclick='game.removeMessage();goHome();' title='Go Home'><img src='img/home.png'></a>"+
+                              "<a href='#' class='icon' onclick='game.removeMessage();game.doRestart();game.pause(false);showAd();' title='Go Home'><img src='img/home.png'></a>"+
                                "<br/><br/>Game Over!<br/> Better luck next time.",
             Infinity);
             var bubbleGame = new BubbleGame(game.model);
             window.game = bubbleGame;
-            game.scoreArea.html("0");
             run = false;
+            jse.pauseMusic();
           }
       }
    });
@@ -330,7 +384,7 @@ BubbleGame.prototype.clickBubble = function(bubbleId){
        bubble.addClass("old-bubble"); 
    });
    game.runLater(1500,function(){
-       game.device.persistState();
+      game.device.persistState();
       if(run){
           game.init();
           game.bubbleNotClickedPenaltyFactor = 1; 
@@ -355,13 +409,17 @@ BubbleGame.prototype.lifeDown = function(){
 
 BubbleGame.prototype.pause = function(external){ //true show externally that game is paused
   //save the current state of the game and stop all timers
+  //if level is init return
+  if(game.model.name === "init")
+      return;
+  game.paused = true;
   var timeRemain = ( (100 - game.moveFactor)/100)*game.model.gameDelay; //in milliseconds
   game.pauseData.time_remain = timeRemain;
   game.clearAllTimers();
   if(external) {
-      game.showMessage("<a href='#' class='icon' onclick='game.share()' title='Share with friends'><img src='img/share.png'></a>"+
+      game.showMessage("<a href='#' class='icon' onclick='game.device.share()' title='Share with friends'><img src='img/share.png'></a>"+
                         "<a href='#' class='icon' onclick='game.resume(true)' title='Resume game'><img src='img/play.png'></a>"+
-                        "<a href='#' class='icon' onclick='game.removeMessage();goHome();' title='Go Home'><img src='img/home.png'></a>",
+                        "<a href='#' class='icon' onclick='game.removeMessage();showAd();' title='Go Home'><img src='img/home.png'></a>",
             Infinity);
       game.showLevelMessage("pause");     
       jse.pauseMusic();
@@ -380,6 +438,7 @@ BubbleGame.prototype.removeMessage = function (){
 };
 
 BubbleGame.prototype.resume = function(external){ //true if we are doing an external resume
+    game.paused = false;
     if(external) {
        game.removeMessage();
        if(game.settings.music_on === "on"){
@@ -398,7 +457,6 @@ BubbleGame.prototype.resume = function(external){ //true if we are doing an exte
 };
 
 BubbleGame.prototype.restart = function(){
-  game.pause(false);
   game.showMessage("<div style='font-size : 30px;color:black'>"+
                    "<div>Restart Game ?</div><br/>"+
                    "<a href='#'  style='margin-right : 20px;' onclick='game.doRestart()'>Yes</a>"+
@@ -524,4 +582,34 @@ BubbleGame.prototype.clearAllTimers = function(){
        clearTimeout(timeout);
    } 
    game.timeoutData = {};
+};
+
+BubbleGame.prototype.upload = function(type){
+  var name = window.prompt("Enter your screen name");   
+  name = name === "" ? "anonymous" : name;
+  Ajax.run({
+      url : "https://numberrushweb.appspot.com/numbers",
+      type : "post",
+      data :  {
+          request_header : {
+              request_msg : "hall_of_fame"
+          },        
+          request_object : {  
+             level : game.model.name,
+             type : type,
+             name : name,
+             user_id : game.state[7]
+          }
+      },
+      error : function(err){
+          game.showMessage( "<a href='#' class='icon' onclick='game.resume(true);' title='Continue Playing'><img src='img/continue.png'></a>"+
+                            "<a href='#' class='icon' onclick='game.upload(\""+type+"\");' title='Upload Score'><img src='img/upload.png'></a>"+
+                            "<br><br><span style='font-size:16px;'>Whoops!Something went wrong,check your internet connection and retry</span>",Infinity);
+      },
+      success : function(json){
+         console.log(json);
+         game.showMessage("<a href='#' class='icon' onclick='game.resume(true);' title='Continue Playing'><img src='img/continue.png'></a>"+
+                           "<a href='#' class='icon' onclick='game.removeMessage();showAd();' title='Go Home'><img src='img/home.png'></a></a>"+
+                           "<br><br><span style='font-size:16px;'>Yey! you are now in the numberrush hall of fame<br> at <a href='#' onclick='jse.hallOfFame()'>Number rush</a>!</span>",Infinity);
+      }});
 };

@@ -1,10 +1,12 @@
 
-
 function Model (){
     //all models inherit from this model
    this.animationDelay = 1000; //in milliseconds
    this.gameDelay = 10000; //10 seconds game delay
    this.playFactorCountMax = 20;
+   this.silverScore = 6000; //6000
+   this.goldScore = 10000;  //10000
+   this.bubbleNumber = 4;
 }
 
 ModelInit.prototype = new Model();
@@ -25,13 +27,29 @@ ModelFour.prototype.constructor = new ModelFour();
 ModelFive.prototype = new Model();
 ModelFive.prototype.constructor = new ModelFive();
 
+ModelSix.prototype = new Model();
+ModelSix.prototype.constructor = new ModelSix();
+
+ModelSeven.prototype = new Model();
+ModelSeven.prototype.constructor = new ModelSeven();
+
+ModelEight.prototype = new Model();
+ModelEight.prototype.constructor = new ModelEight();
+
+ModelNine.prototype = new Model();
+ModelNine.prototype.constructor = new ModelNine();
+
 Model.prototype.levelData = 
     [
          new ModelOne(),
          new ModelTwo(),
          new ModelThree(),
          new ModelFour(),
-         new ModelFive()
+         new ModelFive(),
+         new ModelSix(),
+         new ModelSeven(),
+         new ModelEight(),
+         new ModelNine()
     ];
     
 function Device(){
@@ -53,6 +71,7 @@ Device.prototype.persistState = function(){
     localStorage.setItem(name+"_number-one",game.numberOne);
     localStorage.setItem(name+"_number-two",game.numberTwo);
     localStorage.setItem(name+"_lives",game.lifeArea.html());
+    localStorage.setItem(name+"_play_factor",game.playFactor);
 };
 
 Device.prototype.recoverState = function(){
@@ -64,20 +83,35 @@ Device.prototype.recoverState = function(){
    var numberOne = state[2];
    var numberTwo = state[3];
    var lives = state[4];
+   var pFactor = state[6];
+   if(pFactor){
+      game.playFactor = parseInt(pFactor); 
+   }
+   else {
+     game.playFactor = 10;  
+   }
+   
    if(currentScore){
      game.scoreArea.html(currentScore);  
    }
+   
    if(bestScore){
      game.bestScoreArea.html(bestScore); 
    }
+   
    if(numberOne){
      game.numberOne = parseInt(numberOne);  
      var profPercent = Math.round( ( currentScore/(game.numberOne*3) )*100 );
      game.setProfLevel(profPercent);
    }
+   
    if(numberTwo){
       game.numberTwo = parseInt(numberTwo); 
    }
+   else {
+      game.numberTwo = game.nextRangeRandom(5,10); 
+   }
+   
    if(lives && lives !== "undefined" && lives !== "null" && parseInt(lives) > 0){
       game.lifeArea.html(lives); 
    }
@@ -94,7 +128,15 @@ Device.prototype.doRecoverState = function(name){
    var numberTwo = localStorage.getItem(name+"_number-two"); 
    var lives = localStorage.getItem(name+"_lives"); 
    var lvlUnlocked = localStorage.getItem(name+"_level_unlocked"); 
-   return [currentScore,bestScore,numberOne,numberTwo,lives,lvlUnlocked];
+   var pFactor = localStorage.getItem(name+"_play_factor"); 
+   var userId = localStorage.getItem("user_id");
+   if(!userId){
+      userId = Math.random()*10000000000000000+"" 
+      localStorage.setItem("user_id",userId);
+      localStorage.setItem("music_on","on");
+      localStorage.setItem("sound_on","on");
+   }
+   return [currentScore,bestScore,numberOne,numberTwo,lives,lvlUnlocked,pFactor,userId];
 };
 
 Device.prototype.recoverSettings = function(){
@@ -112,9 +154,8 @@ Device.prototype.recoverSettings = function(){
 
 
 Device.prototype.showMenu = function(){
-    if(game.model.name !== "init"){
+    if(game.model.name !== "init")
         game.pause(false);
-    }
     var menu = [
         {
             label: "Sound",
@@ -140,6 +181,12 @@ Device.prototype.saveSettings = function(ids){
     if(game.model.name !== "init"){
        game.resume(false);
     }
+    if(musicOn === "on" && game.model.name !== "init"){
+       jse.playMusic();
+    }
+    else{
+       jse.pauseMusic();
+    }
     game.removeMessage();  
 };
 
@@ -158,6 +205,7 @@ AndroidDevice.prototype.playPopAudio = function(){
   jse.playPopAudio();  
 };
 
+/*
 AndroidDevice.prototype.persistState = function(){
     var level = game.model.name;
     var currentScore = game.scoreArea.html();
@@ -167,6 +215,7 @@ AndroidDevice.prototype.persistState = function(){
     jse.saveStateData(level,"NUMBER_ONE",game.numberOne);
     jse.saveStateData(level,"NUMBER_TWO",game.numberTwo);
     jse.saveStateData(level,"LIVES",game.lifeArea.html());
+    jse.saveStateData(level,"PLAY_FACTOR",game.playFactor);
 };
 
 
@@ -182,7 +231,8 @@ AndroidDevice.prototype.doRecoverState = function(level){
    var numberTwo = data[index][3]; 
    var lives = data[index][4]; 
    var lvlUnlocked= data[index][5];
-   return [currentScore,bestScore,numberOne,numberTwo,lives,lvlUnlocked];  
+   var playFactor = data[index][6];
+   return [currentScore,bestScore,numberOne,numberTwo,lives,lvlUnlocked,playFactor];  
 };
 
 
@@ -204,7 +254,7 @@ AndroidDevice.prototype.recoverSettings = function(){
 
 
 AndroidDevice.prototype.showMenu = function(){
-    if(game.model.name !== "init")
+   if(game.model.name !== "init")
         game.pause(false);
    console.log(game.settings.music_on);
    console.log(game.settings.sound_on);
@@ -241,6 +291,11 @@ AndroidDevice.prototype.saveSettings = function(ids){
     }
     game.removeMessage();  
 };
+*/
+AndroidDevice.prototype.share = function(){
+   var shareString = "I have a score of "+game.bestScoreArea.html()+" with a proficiency of "+game.profValue.html()+"% Play #NumberRush on Android today http://goo.gl/FHx2gY "; 
+   jse.share(shareString);
+};
 
 
 WindowsDevice.prototype = new Device();
@@ -274,22 +329,19 @@ function ModelInit(){
 }
 
 
-
 ModelInit.prototype.initAllBubbles = function(){
    var dia = game.bubbleDiameter+"px";
    var img = "<img src='img/lock.png' style='width:"+dia+";height : "+dia+"'>";
    var len = Object.keys(game.model.levelData).length;
    for(var x = 1; x < len + 1; x++){
-      var levelPrev =  x === 1 ? 1 : x - 1;
-      var previousLevelUnlocked = game.device.doRecoverState(levelPrev)[5];
+      var levelUnlocked = game.device.doRecoverState(x)[5];
       var bubble;
       var data = game.model.getRowAndCol(x - 1);
-      if(x === 1 || previousLevelUnlocked === "true"){
+      if(x === 1 || levelUnlocked === "true"){
           bubble = new Bubble(x,"","");
           game.addInitBubble(bubble,data[0],data[1],"ModelInit.prototype.levelHandler("+(x - 1)+")");
       }
       else {
-          console.log("level "+x+" locked ");
           bubble = new Bubble(img,"","");  
           game.addInitBubble(bubble,data[0],data[1],"");
       }
@@ -304,7 +356,6 @@ ModelInit.prototype.levelHandler = function(x){
      var bubbleGame = new BubbleGame(model);
      window.game = bubbleGame;
      game.device.recoverSettings();
-     console.log("level hand : "+game.settings.music_on)
      game.device.recoverState();
      game.showLevelMessage("init");
      if(game.settings.music_on === "on"){
@@ -324,8 +375,9 @@ ModelInit.prototype.levelHandler = function(x){
 //the model can also specify a different movement pattern for the bubbles
 function ModelOne(){
    this.name = 1;
-   this.nextLevelScore = 2000; //to get to level 2 your best score must be more than 5000
+   this.nextLevelScore = 2000; //2000 to get to level 2 your best score must be more than 5000
    this.lives = 3; //you have three chances to fail before game ends
+  
 }
 
 
@@ -406,7 +458,7 @@ ModelTwo.prototype.initAllBubbles = function(){
 
 
 function ModelThree(){
-   this.gameDelay = 12000; //12 seconds game delay
+   this.gameDelay = 10000; //12 seconds game delay
    this.name = 3;
    this.nextLevelScore = 3000; //to get to level 4 your best score must be more than 5000
    this.lives = 3; //you have five chances to fail before game ends
@@ -455,10 +507,10 @@ ModelThree.prototype.initAllBubbles = function(){
 
 
 function ModelFour(){
-   this.gameDelay = 7000; //7 seconds game delay
+   this.gameDelay = 8000; //7 seconds game delay
    this.name = 4;
    this.playFactorCountMax = 10;
-   this.nextLevelScore = 5000; 
+   this.nextLevelScore = 4000; 
    this.lives = 3; //you have five chances to fail before game ends
 }
 
@@ -469,15 +521,75 @@ ModelFour.prototype.initAllBubbles = function(){
 
 
 function ModelFive(){
-   this.gameDelay = 7000; //7 seconds game delay
+   this.gameDelay = 8000; //7 seconds game delay
    this.name = 5;
    this.playFactorCountMax = 10;
-   this.nextLevelScore = 5000; 
+   this.nextLevelScore = 4000; 
    this.lives = 3; //you have five chances to fail before game ends
 }
 
-ModelFour.prototype.initAllBubbles = function(){
+ModelFive.prototype.initAllBubbles = function(){
   ModelTwo.prototype.initAllBubbles();
 };
+
+
+function ModelSix(){
+   this.gameDelay = 8000; //7 seconds game delay
+   this.name = 6;
+   this.playFactorCountMax = 10;
+   this.nextLevelScore = 4000; 
+   this.lives = 3; //you have five chances to fail before game ends
+}
+
+ModelSix.prototype.initAllBubbles = function(){
+  ModelThree.prototype.initAllBubbles();
+};
+
+function ModelSeven(){
+   this.gameDelay = 10000; //7 seconds game delay
+   this.name = 7;
+   this.playFactorCountMax = 10;
+   this.nextLevelScore = 4000; 
+   this.lives = 3; //you have five chances to fail before game ends
+   this.bubbleNumber = 5;
+}
+
+ModelSeven.prototype.initAllBubbles = function(){
+  ModelOne.prototype.initAllBubbles();
+};
+
+
+function ModelEight(){
+   this.gameDelay = 10000; //7 seconds game delay
+   this.name = 8;
+   this.playFactorCountMax = 10;
+   this.nextLevelScore = 4000; 
+   this.lives = 3; //you have five chances to fail before game ends
+   this.bubbleNumber = 5;
+}
+
+ModelEight.prototype.initAllBubbles = function(){
+  ModelTwo.prototype.initAllBubbles();
+};
+
+
+function ModelNine(){
+   this.gameDelay = 10000; //7 seconds game delay
+   this.name = 9;
+   this.playFactorCountMax = 10;
+   this.nextLevelScore = 4000; 
+   this.lives = 3; //you have five chances to fail before game ends
+   this.bubbleNumber = 5;
+}
+
+ModelNine.prototype.initAllBubbles = function(){
+  ModelThree.prototype.initAllBubbles();
+};
+
+
+
+
+
+
 
 

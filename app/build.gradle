@@ -8,8 +8,8 @@ android {
         applicationId "com.questlab.numberrush"
         minSdkVersion 9
         targetSdkVersion 20
-        versionCode 1
-        versionName "PI"
+        versionCode 4
+        versionName "1.3"
     }
     buildTypes {
         release {
