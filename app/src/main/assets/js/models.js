@@ -66,12 +66,12 @@ Device.prototype.persistState = function(){
     var name = game.model.name;
     var currentScore = game.scoreArea.html();
     var bestScore = game.bestScoreArea.html();
-    localStorage.setItem(name+"_best-score",bestScore);
-    localStorage.setItem(name+"_current-score",currentScore);
-    localStorage.setItem(name+"_number-one",game.numberOne);
-    localStorage.setItem(name+"_number-two",game.numberTwo);
-    localStorage.setItem(name+"_lives",game.lifeArea.html());
-    localStorage.setItem(name+"_play_factor",game.playFactor);
+    jse.setItem(name+"_best-score",bestScore);
+    jse.setItem(name+"_current-score",currentScore);
+    jse.setItem(name+"_number-one",game.numberOne);
+    jse.setItem(name+"_number-two",game.numberTwo);
+    jse.setItem(name+"_lives",game.lifeArea.html());
+    jse.setItem(name+"_play_factor",game.playFactor);
 };
 
 Device.prototype.recoverState = function(){
@@ -90,13 +90,19 @@ Device.prototype.recoverState = function(){
    else {
      game.playFactor = 10;  
    }
-   
+  
    if(currentScore){
      game.scoreArea.html(currentScore);  
+   }
+   else {
+      game.scoreArea.html("0"); 
    }
    
    if(bestScore){
      game.bestScoreArea.html(bestScore); 
+   }
+   else {
+     game.bestScoreArea.html("0");  
    }
    
    if(numberOne){
@@ -120,28 +126,289 @@ Device.prototype.recoverState = function(){
    }
 };
 
+Device.prototype.firstRunInit = function(){
+   var userId = Math.random()*10000000000000000+"";
+   jse.setItem("user_id",userId);
+   jse.setItem("music_on","on");
+   jse.setItem("sound_on","on");
+   return [userId];
+};
+
+Device.prototype.firstRunHomeScreen = function(){
+       $('#td_0_0').webuiPopover({
+           title:'Level 1',
+           content:'Click to start playing level one,respond faster to get higher scores',
+           style : 'inverse',
+           placement:'right-bottom',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+            height:'auto'//can be set with  number
+       });
+       $('#td_0_0').click();
+};
+
+
+
+Device.prototype.firstRunStart = function(){
+  game.device.firstRunInit();
+  game.showMessage("You can now start... good luck!",2000,game.doRestart);  
+};
+
+Device.prototype.clearHelpTrail = function(id){
+  $( "#"+id).unbind( "click" );
+};
+
+Device.prototype.firstRunNumberOne = function(){
+     $('#number-area-left').webuiPopover({
+           title:'Number One',
+           content:"This is the first number, you should look for a sum from the blue circles that will make it equal to the second number\n\
+                    <br/><br/><a href=# onclick=$('#number-area-left').removeClass('help-highlight');game.device.firstRunNumberTwo();>Next</a>",
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+    game.runLater(10,function(){
+       $('#number-area-left').click();
+       $('#number-area-left').addClass("help-highlight");
+       game.glow($('#number-area-left'),3000);
+       game.device.clearHelpTrail('number-area-left');
+    });
+};
+
+Device.prototype.firstRunNumberTwo = function(){
+    $('#number-area-right').webuiPopover({
+           title:'Number Two',
+           content:"This is the second number.\n\
+                     <br/><br/><a href='#' onclick=$('#number-area-right').removeClass('help-highlight');game.device.firstRunBubble();>Next</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+     });
+    game.runLater(10,function(){
+        $('#number-area-right').click();
+        $('#number-area-right').addClass("help-highlight");
+        game.glow($('#number-area-right'),3000);
+        game.device.clearHelpTrail('number-area-right');
+        
+    });  
+};
+
+Device.prototype.firstRunBubble = function(){
+    var data = game.model.getRowAndCol(game.solution);
+    var solId = "td_"+data[0]+"_"+data[1];
+    $("#"+solId+"").webuiPopover({
+           title:'Correct Answer',
+           content:"This is the correct answer because the first number "+game.numberOneArea.html()+" plus the sum of numbers in this circle,\n\
+                    equals the second number "+game.numberTwoArea.html()+"\n\
+                     <br/><br/><a href='#' onclick=$('#"+solId+"').removeClass('help-highlight');game.device.firstRunScores()>Next</a>"  ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+    game.runLater(10,function(){
+        $("#"+solId).click();
+        $("#"+solId).addClass("help-highlight");
+        game.device.clearHelpTrail(solId);
+    });  
+};
+
+
+Device.prototype.firstRunScores = function(){
+    $('#score-table').webuiPopover({
+           title:'Scores',
+           content:"This is your current and best score, responding faster earns you a higher score\n\
+                     <br/><br/><a href='#' onclick=$('#score-table').removeClass('help-highlight');game.device.firstRunProf();>Next</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       }); 
+    game.runLater(10,function(){
+        $('#score-table').click();
+        $("#score-table").addClass("help-highlight");
+        game.device.clearHelpTrail('score-table');
+    });  
+};
+
+Device.prototype.firstRunProf = function(){
+    $('#prof-table').webuiPopover({
+           title:'Proficiency',
+           content:"This is your degree of responsiveness, it is measured out of 100%. \n\
+                The lowest proficiency is amateur then novice,expert,pro and the highest is genius\n\
+                 <br/><br/><a href='#' onclick=$('#prof-table').removeClass('help-highlight');game.device.firstRunPause();>Next</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+       
+    game.runLater(10,function(){
+        $('#prof-table').click();
+        $("#prof-table").addClass("help-highlight");
+        game.device.clearHelpTrail('prof-table');
+    });  
+};
+
+Device.prototype.firstRunPause = function(){
+    $('#pause_link').webuiPopover({
+           title:'Pause',
+           content:"Press here to pause game play any moment you wish to\n\
+                    <br/><br/><a href='#' onclick=$('#pause_link').removeClass('help-highlight');game.device.firstRunShare();>Next</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+    game.runLater(10,function(){
+        $('#pause_link').click();
+        $("#pause_link").addClass("help-highlight");
+        game.device.clearHelpTrail('pause_link');
+        
+    });  
+};
+
+Device.prototype.firstRunRestart = function(){
+    $('#replay_link').webuiPopover({
+           title:'Replay',
+           content:"Press here to restart the game\n\
+                   <br/><br/> <a href='#' onclick=$('#replay_link').removeClass('help-highlight');game.device.firstRunLife();>Next</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+    game.runLater(10,function(){
+        $('#replay_link').click();
+        $("#replay_link").addClass("help-highlight");
+        game.device.clearHelpTrail('replay_link');
+    });  
+};
+
+
+Device.prototype.firstRunLife = function(){
+    $('#life-heart').webuiPopover({
+           title:'Lives',
+           content:"These are the number of lives you have, when you get an answer wrong you lose a life. \n\
+                    When lives run out the game ends\n\
+                    <br/><br/><a href='#' onclick=$('#life-heart').removeClass('help-highlight');$('#life-heart').click();game.device.firstRunStart();>Got it!</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+    game.runLater(10,function(){
+        $('#life-heart').click();
+        $("#life-heart").addClass("help-highlight");
+        game.device.clearHelpTrail('life-heart');
+        game.doRestart();
+        game.pause(false);
+    });  
+};
+
+Device.prototype.firstRunShare = function(){
+    $('#share_icon').webuiPopover({
+           title:'Share',
+           content:"Click here to share your score with your friends\n\
+                    <br/><br/><a href='#' onclick=$('#share_icon').removeClass('help-highlight');game.device.firstRunPlay();>Next</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+    game.runLater(10,function(){
+        var icon = $('#share_icon');
+        var onclick = icon[0].getAttribute("onclick");
+        icon[0].removeAttribute("onclick");
+        icon.click();
+        icon[0].setAttribute("onclick",onclick);
+        icon.addClass("help-highlight");
+        game.device.clearHelpTrail('share_icon');
+    });  
+};
+
+Device.prototype.firstRunPlay = function(){
+    $('#play_icon').webuiPopover({
+           title:'Resume Game',
+           content:"Click here to resume the game\n\
+                    <br/><br/><a href='#' onclick=$('#play_icon').removeClass('help-highlight');game.device.firstRunHome();>Next</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+    game.runLater(10,function(){
+        var icon = $('#play_icon')
+        var onclick = icon[0].getAttribute("onclick");
+        icon[0].removeAttribute("onclick");
+        icon.click();
+        icon[0].setAttribute("onclick",onclick);
+        icon.addClass("help-highlight");
+        game.device.clearHelpTrail('play_icon');
+    });  
+};
+
+Device.prototype.firstRunHome = function(){
+    $('#home_icon').webuiPopover({
+           title:'Home',
+           content:"Click here to go back home and select another level\n\
+                    <br/><br/><a href='#' onclick=$('#home_icon').removeClass('help-highlight');game.device.firstRunRestart()>Next</a>" ,
+           style : 'inverse',
+           arrow : false,
+           placement:'auto',//values: auto,top,right,bottom,left,top-right,top-left,bottom-right,bottom-left
+           width:'auto',//can be set with  number
+           height:'auto'//can be set with  number
+       });
+    game.runLater(10,function(){
+        var icon = $('#home_icon');
+        var onclick = icon[0].getAttribute("onclick");
+        icon[0].removeAttribute("onclick");
+        icon.click();
+        icon[0].setAttribute("onclick",onclick);
+        icon.addClass("help-highlight");
+        game.device.clearHelpTrail('home_icon');
+    });  
+};
 
 Device.prototype.doRecoverState = function(name){
-   var bestScore = localStorage.getItem(name+"_best-score");
-   var currentScore = localStorage.getItem(name+"_current-score");
-   var numberOne = localStorage.getItem(name+"_number-one");
-   var numberTwo = localStorage.getItem(name+"_number-two"); 
-   var lives = localStorage.getItem(name+"_lives"); 
-   var lvlUnlocked = localStorage.getItem(name+"_level_unlocked"); 
-   var pFactor = localStorage.getItem(name+"_play_factor"); 
-   var userId = localStorage.getItem("user_id");
+   var bestScore = jse.getItem(name+"_best-score");
+   var currentScore = jse.getItem(name+"_current-score");
+   var numberOne = jse.getItem(name+"_number-one");
+   var numberTwo = jse.getItem(name+"_number-two"); 
+   var lives = jse.getItem(name+"_lives"); 
+   var lvlUnlocked = jse.getItem(name+"_level_unlocked"); 
+   var pFactor = jse.getItem(name+"_play_factor"); 
+   var userId = jse.getItem("user_id");
+   var firstRun = game.device.isFirstRun();
+   var data = [currentScore,bestScore,numberOne,numberTwo,lives,lvlUnlocked,pFactor,userId,firstRun];
+   game.state = data;
+   return data;
+};
+
+Device.prototype.isFirstRun = function(){
+   var userId = jse.getItem("user_id");
    if(!userId){
-      userId = Math.random()*10000000000000000+"" 
-      localStorage.setItem("user_id",userId);
-      localStorage.setItem("music_on","on");
-      localStorage.setItem("sound_on","on");
+      return true;
+   }  
+   else {
+     return false;
    }
-   return [currentScore,bestScore,numberOne,numberTwo,lives,lvlUnlocked,pFactor,userId];
 };
 
 Device.prototype.recoverSettings = function(){
-   var soundOn = localStorage.getItem("sound-on");
-   var musicOn = localStorage.getItem("music-on");
+   var soundOn = jse.getItem("sound-on");
+   var musicOn = jse.getItem("music-on");
    if(!soundOn){
        soundOn = "on";
    }
@@ -160,12 +427,12 @@ Device.prototype.showMenu = function(){
         {
             label: "Sound",
             options: ["off", "on"],
-            preset: localStorage.getItem("sound-on")
+            preset: jse.getItem("sound-on")
         },
         {
             label: "Music",
             options: ["off", "on"],
-            preset: localStorage.getItem("music-on")
+            preset: jse.getItem("music-on")
         }
     ];
     game.menuBuilder(menu);  
@@ -174,8 +441,8 @@ Device.prototype.showMenu = function(){
 Device.prototype.saveSettings = function(ids){
     var soundOn = $("#" + ids[0]).val();
     var musicOn = $("#" + ids[1]).val();
-    localStorage.setItem("sound-on", soundOn);
-    localStorage.setItem("music-on", musicOn);
+    jse.setItem("sound-on", soundOn);
+    jse.setItem("music-on", musicOn);
     game.settings.sound_on = soundOn;
     game.settings.music_on = musicOn;
     if(game.model.name !== "init"){
@@ -202,98 +469,11 @@ function AndroidDevice(){
 }
 
 AndroidDevice.prototype.playPopAudio = function(){
-  jse.playPopAudio();  
+   jse.playPopAudio();  
 };
 
-/*
-AndroidDevice.prototype.persistState = function(){
-    var level = game.model.name;
-    var currentScore = game.scoreArea.html();
-    var bestScore = game.bestScoreArea.html();
-    jse.saveStateData(level,"BEST",bestScore);
-    jse.saveStateData(level,"CURRENT",currentScore);
-    jse.saveStateData(level,"NUMBER_ONE",game.numberOne);
-    jse.saveStateData(level,"NUMBER_TWO",game.numberTwo);
-    jse.saveStateData(level,"LIVES",game.lifeArea.html());
-    jse.saveStateData(level,"PLAY_FACTOR",game.playFactor);
-};
-
-
-AndroidDevice.prototype.doRecoverState = function(level){
-   if(level === "init")
-       return;
-   var index = level - 1;
-   var data = JSON.parse(jse.readStateData());
-   console.log(data);
-   var currentScore = data[index][0];
-   var bestScore = data[index][1];
-   var numberOne = data[index][2];
-   var numberTwo = data[index][3]; 
-   var lives = data[index][4]; 
-   var lvlUnlocked= data[index][5];
-   var playFactor = data[index][6];
-   return [currentScore,bestScore,numberOne,numberTwo,lives,lvlUnlocked,playFactor];  
-};
-
-
-AndroidDevice.prototype.recoverSettings = function(){
-   var settings = JSON.parse(jse.readSettingsData());
-   console.log("settings: "+settings);
-   var soundOn = settings[0];
-   var musicOn = settings[1];
-   if(!soundOn){
-       soundOn = "off";
-   }
-   if(!musicOn){
-       musicOn = "off";
-   }
-   game.settings.sound_on = soundOn;
-   game.settings.music_on = musicOn; 
-  
-};
-
-
-AndroidDevice.prototype.showMenu = function(){
-   if(game.model.name !== "init")
-        game.pause(false);
-   console.log(game.settings.music_on);
-   console.log(game.settings.sound_on);
-    var menu = [
-        {
-            label: "Sound",
-            options: ["off", "on"],
-            preset: game.settings.sound_on
-        },
-        {
-            label: "Music",
-            options: ["off", "on"],
-            preset: game.settings.music_on
-        }
-    ];
-    game.menuBuilder(menu);  
-};
-
-AndroidDevice.prototype.saveSettings = function(ids){
-    var soundOn = $("#" + ids[0]).val();
-    var musicOn = $("#" + ids[1]).val();
-    jse.saveSettingsData("SOUND_ON",soundOn);
-    jse.saveSettingsData("MUSIC_ON",musicOn);
-    game.settings.sound_on = soundOn;
-    game.settings.music_on = musicOn;
-    if(game.model.name !== "init"){
-       game.resume(false);
-    }
-    if(musicOn === "on" && game.model.name !== "init"){
-       jse.playMusic();
-    }
-    else{
-       jse.pauseMusic();
-    }
-    game.removeMessage();  
-};
-*/
 AndroidDevice.prototype.share = function(){
-   var shareString = "I have a score of "+game.bestScoreArea.html()+" with a proficiency of "+game.profValue.html()+"% Play #NumberRush on Android today http://goo.gl/FHx2gY "; 
+   var shareString = "I have a score of "+game.bestScoreArea.html()+" with a proficiency of "+game.profValue.html()+"% on level "+game.model.name+" Play #NumberRush on Android today http://goo.gl/FHx2gY "; 
    jse.share(shareString);
 };
 
@@ -393,6 +573,7 @@ ModelOne.prototype.initAllBubbles = function(){
       if(x === randStop){
          firstNum = ansOne;
          secondNum = ansTwo;
+         game.solution = x;
       }
       else {
           firstNum =  game.nextRandom(diff);  
@@ -442,6 +623,7 @@ ModelTwo.prototype.initAllBubbles = function(){
         if(x === randStop){
             firstNum = ansOne;
             secondNum = ansTwo;
+            game.solution = x;
         }
         else {
            var firstNum = game.nextRangeRandom(diff,2*diff);
@@ -488,6 +670,7 @@ ModelThree.prototype.initAllBubbles = function(){
          firstNum = ansOne;
          secondNum = ansTwo;
          sign = ansSign;
+         game.solution = x;
       }
       else {
           var sign = Math.random() > 0.5 ? "+" : "-";

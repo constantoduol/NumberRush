@@ -2,6 +2,7 @@ function BubbleGame(model){
    this.device = new AndroidDevice();
    this.model = model;
    this.bubbleArea =  $("#bubble-table");
+   this.bubbleActiveArea =  $("#bubble-active-area");
    this.progressBar = $("#progressbar");
    this.messageArea = $("#message-area");
    this.numberOneArea = $("#number-area-left");
@@ -51,9 +52,14 @@ function BubbleGame(model){
    this.achievementFactor = 100/this.achievements.length;
    this.bubbleArea.css("border-spacing",this.bubbleAreaSpacingHorizontal+"px  "+this.bubbleAreaSpacingVertical+"px");
    this.bubbleArea.css("border-collapse","separate");
+   this.bubbleActiveArea.css("width",width+"px");
    this.settings = {};
    this.state = [];
    this.paused = false;
+   this.solution = 0;
+   var fontSize = parseInt(this.bubbleDiameter/2) + "px";
+   this.numberOneArea.css("font-size",fontSize);
+   this.numberTwoArea.css("font-size",fontSize);
 }
 
 
@@ -85,6 +91,10 @@ BubbleGame.prototype.init = function(){
        $("#scorebar").css("display","none");
        game.bubbleArea.html("");
        game.model.initAllBubbles();
+       if(game.state[8]) { //this means the user is running the game for the very first time
+          game.device.firstRunHomeScreen();
+       }
+       
     }
     else {
         game.model.initAllBubbles();
@@ -109,12 +119,11 @@ BubbleGame.prototype.showLevelMessage = function(type){ //if type == init, play,
                               "<a href='#' class='icon' onclick='game.removeMessage();showAd();' title='Go Home'><img src='img/home.png'></a>"+
                               "<br/><br/>Congratulations! You win the game!",
             Infinity);
-            localStorage.setItem(nextLevel+"_level_unlocked","true");
+            jse.setItem(nextLevel+"_level_unlocked","true");
        }
        else{
           
-          localStorage.setItem(nextLevel+"_level_unlocked","true");
-          var hasBronze = localStorage.getItem(nextLevel+"_level_unlocked");
+          var hasBronze = jse.getItem(nextLevel+"_level_unlocked");
           
           if(hasBronze !== "true"){ //if the next level is still unlocked show this
             game.showMessage("<a href='#' class='icon' onclick='game.device.share()' title='Share with friends'><img src='img/share.png'></a>"+ 
@@ -123,20 +132,21 @@ BubbleGame.prototype.showLevelMessage = function(type){ //if type == init, play,
                               "<br/><br/><span style='font-size : 16px;'>Congratulations! You have earned a bronze badge"+
                               "<br/><img src='img/bronze.png' width=15 height=15><img src='img/bronze.png' width=15 height=15><img src='img/bronze.png' width=15 height=15><br/>"+
                               "You can now go to level "+nextLevel+" or continue playing to earn more badges</span>",Infinity);  
+                       jse.setItem(nextLevel+"_level_unlocked","true");
           }
           else { //otherwise check for silver and gold badges otherwise just resume
-              var hasGold = localStorage.getItem(game.model.name+"_gold_badge");
-              var hasSilver = localStorage.getItem(game.model.name+"_silver_badge");
+              var hasGold = jse.getItem(game.model.name+"_gold_badge");
+              var hasSilver = jse.getItem(game.model.name+"_silver_badge");
               var badge;
               if(currentBest >= game.model.goldScore && hasGold !== "true"){
                 //this person has earned a gold badge  
                  badge = "gold";
-                 localStorage.setItem(game.model.name+"_gold_badge","true");
+                 jse.setItem(game.model.name+"_gold_badge","true");
               }
               else if(currentBest >= game.model.silverScore && hasSilver !== "true"){
                  //this person has earned a silver badge
                  badge = "silver";
-                 localStorage.setItem(game.model.name+"_silver_badge","true"); 
+                 jse.setItem(game.model.name+"_silver_badge","true"); 
               }
               else {
                 return;
@@ -178,10 +188,20 @@ BubbleGame.prototype.showLevelMessage = function(type){ //if type == init, play,
        
         if(msg){
             game.showMessage(msg,4000,game.init);
+            game.runLater(4200,function(){
+                 if(game.state[8]){
+                     console.log("show number one");
+                     game.pause(false);
+                     game.device.firstRunNumberOne();
+                 }
+            });
         }
         else {
           game.init();  
         }
+        //incase this is the first time the game is running
+        
+       
     }
     
     else if(type === "pause"){
@@ -319,7 +339,7 @@ BubbleGame.prototype.clickBubble = function(bubbleId){
    bubble[0].style.fontSize = null;
    var run = true;
    game.pause(false);
-   game.runLater(800,function(){
+   game.runLater(600,function(){
       var sln = window.eval(expr);
       innerBubble.html(sln);
       var diff = game.numberTwo - game.numberOne;
@@ -417,9 +437,9 @@ BubbleGame.prototype.pause = function(external){ //true show externally that gam
   game.pauseData.time_remain = timeRemain;
   game.clearAllTimers();
   if(external) {
-      game.showMessage("<a href='#' class='icon' onclick='game.device.share()' title='Share with friends'><img src='img/share.png'></a>"+
-                        "<a href='#' class='icon' onclick='game.resume(true)' title='Resume game'><img src='img/play.png'></a>"+
-                        "<a href='#' class='icon' onclick='game.removeMessage();showAd();' title='Go Home'><img src='img/home.png'></a>",
+      game.showMessage("<a href='#' class='icon' onclick='game.device.share()' id='share_icon' title='Share with friends'><img src='img/share.png'></a>"+
+                        "<a href='#' class='icon' onclick='game.resume(true)' id='play_icon' title='Resume game'><img src='img/play.png'></a>"+
+                        "<a href='#' class='icon' onclick='game.removeMessage();showAd();' id='home_icon' title='Go Home'><img src='img/home.png'></a>",
             Infinity);
       game.showLevelMessage("pause");     
       jse.pauseMusic();
@@ -607,7 +627,6 @@ BubbleGame.prototype.upload = function(type){
                             "<br><br><span style='font-size:16px;'>Whoops!Something went wrong,check your internet connection and retry</span>",Infinity);
       },
       success : function(json){
-         console.log(json);
          game.showMessage("<a href='#' class='icon' onclick='game.resume(true);' title='Continue Playing'><img src='img/continue.png'></a>"+
                            "<a href='#' class='icon' onclick='game.removeMessage();showAd();' title='Go Home'><img src='img/home.png'></a></a>"+
                            "<br><br><span style='font-size:16px;'>Yey! you are now in the numberrush hall of fame<br> at <a href='#' onclick='jse.hallOfFame()'>Number rush</a>!</span>",Infinity);

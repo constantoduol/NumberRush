@@ -40,4 +40,19 @@ public class JavascriptExtensions {
     public void hallOfFame(){
         GameActivity.getActivityInstance().hallOfFame();
     }
+
+    @JavascriptInterface
+    public void setItem(String key, String value){
+        Database.put(key,value);
+    }
+
+    @JavascriptInterface
+    public String getItem(String key){
+        return Database.get(key);
+    }
+
+    @JavascriptInterface
+    public void removeItem(String key){
+        Database.remove(key);
+    }
 }

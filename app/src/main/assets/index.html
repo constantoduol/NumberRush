@@ -17,6 +17,7 @@
     <link href="css/jquery.ui.core.css" rel="stylesheet" />
     <link href="css/jquery.ui.progressbar.css" rel="stylesheet" />
     <link href="css/jquery.ui.theme.css" rel="stylesheet" />
+    <link href="css/jquery.webui-popover.min.css" rel="stylesheet" />
     <style>
         
         body {
@@ -46,7 +47,7 @@
          <div id = "scorebar">
              <span id="score-anim-area-up"></span>
              <div style="display : -webkit-box">
-                    <div class="score-table">
+                    <div class="score-table" id="score-table">
                         <div><span>SCORE</span> <span id="current-score" >0</span></div>
 	        	<div><span>BEST</span> <span id="best-score" >0</span></div>
                     </div>
@@ -55,10 +56,10 @@
                         <div id="prof-value">0</div>
                     </div>
              <div>
-                   <a href="#" class="link" title="Pause Game" onclick="game.pause(true);">
+                   <a href="#" class="link" title="Pause Game" id="pause_link" onclick="game.pause(true);">
                        <img src="img/pause.png" width="25" height="25" />
                    </a>
-                   <a href="#" class="link" title="Restart Game" onclick="game.restart();">
+                   <a href="#" class="link" title="Restart Game" id="replay_link" onclick="game.restart();">
                        <img src="img/replay.png" width="25" height="25" />
                   </a>
                    <span id="score-anim-area-down"></span>
@@ -95,6 +96,7 @@
     <script type="text/javascript" src="js/jquery.ui.core.js"></script>
     <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
     <script type="text/javascript" src="js/jquery.ui.progressbar.js"></script>
+    <script type="text/javascript" src="js/jquery.webui-popover.min.js"></script>
     <script type="text/javascript" src="js/bubbles.js"></script>
     <script type="text/javascript" src="js/ui.js"></script>
     <script type="text/javascript" src="js/models.js"></script>

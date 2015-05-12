@@ -8,15 +8,16 @@ android {
         applicationId "com.questlab.numberrush"
         minSdkVersion 9
         targetSdkVersion 20
-        versionCode 4
-        versionName "1.3"
+        versionCode 8
+        versionName "1.7"
     }
     buildTypes {
         release {
-            runProguard false
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
     lintOptions {
         abortOnError false
         checkReleaseBuilds false

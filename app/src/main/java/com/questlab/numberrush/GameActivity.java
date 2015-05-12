@@ -39,6 +39,7 @@ public class GameActivity extends Activity implements InterstitialListener {
     private static int popId;
     private InterstitialAd interstitial;
     private String AD_UNIT_ID = "ca-app-pub-2739675128716980/5370388755";
+    private Database db;
 
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -78,6 +79,7 @@ public class GameActivity extends Activity implements InterstitialListener {
         AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
         interstitial.loadAd(adRequestBuilder.build());
 
+        db = new Database(this);
 
     }
 
@@ -208,6 +210,8 @@ public class GameActivity extends Activity implements InterstitialListener {
     public static GameActivity getActivityInstance() {
         return activityInstance;
     }
+
+
 
     public void hallOfFame(){
         startActivity(new Intent(getApplicationContext(), HallActivity.class));

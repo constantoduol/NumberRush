@@ -4,6 +4,8 @@
       line-height: 1;
   }
   
+ 
+  
   @font-face {
       font-family: buxton;
       src : url(fonts/BuxtonSketch.woff);
@@ -30,6 +32,10 @@
       padding-right: 7px;
       cursor:pointer;
       margin-left : 5px;
+  }
+  
+  .help-highlight {
+    border : 2px solid green;  
   }
    
   #life-area {
@@ -92,9 +98,11 @@
  
    
    #bubble-active-area {
-     margin-top : 10px;
+     margin-top : 50px;
      display: flex;
      overflow : hidden;
+     width : auto;
+     height : auto;
      
    }
    
